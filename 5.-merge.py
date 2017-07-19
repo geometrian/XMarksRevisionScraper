@@ -6,7 +6,11 @@ import _bookmark_pyparser as bpp
 print("Getting paths . . .")
 
 def get_files(directory):
-    paths = [directory+f for f in os.listdir(directory) if os.path.isfile(directory+f)]
+    paths = []
+    for name in os.listdir(directory):
+        path = os.path.join(directory,name)
+        if os.path.isfile(path) and os.path.splitext(path)[1]==".html":
+            paths.append(path)
     return paths
 
 def load_from(file):
