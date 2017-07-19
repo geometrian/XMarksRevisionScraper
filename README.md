@@ -2,7 +2,7 @@
 
 ### Scrapes all revisions of your XMarks bookmarks, and optionally does additional processing and merging.
 
-[XMarks](http://xmarks.com/) is a fairly good bookmark backup/share service, and I've been using it since 2012.  Once upon a time, I accidentally deleted and then synchronized my bookmarks.  Fortunately, XMarks stores revisions of your bookmarks, but unfortunately I didn't realize I had screwed up until some time later, when I had added more bookmarks.
+[XMarks](http://xmarks.com/) is a fairly good bookmark backup/share service, and I've been using it since 2012.  Once upon a time, I accidentally deleted and then synchronized my bookmarks.  Fortunately, XMarks stores revisions of your bookmarks.  Unfortunately, I didn't realize I had screwed up until some time later, when I had added more bookmarks.
 
 To fix this, one should download all the revisions, merge all URLs in them, and then re-upload.  Unfortunately, XMarks had 2264 revisions of my bookmarks and a messy JavaScript GUI to download them individually, but not (despite my support request) a way to download them collectively.
 
@@ -10,29 +10,29 @@ Hence, these scripts.  These will scrape the website and allow you to download a
 
 ## Instructions
 
-1. Install prerequisites
+1. Install prerequisites:
     1. Install [Python](https://www.python.org/downloads/).  These scripts were tested with Python 3.5.1, but other Python 3s should work.
     2. Install `lxml` and `pyparsing`.  Pip works fine:<br/>
     `pip install --upgrade lxml pyparsing`<br/>
     If it's not on your `PATH`, then point to it.  On Windows, this is something like (check the actual location):<br/>
     `C:\Python35\Scripts\pip.exe install --upgrade lxml pyparsing`
 
-2. Extract the revision list.
+2. Extract the revision list:
     1. Go to [https://www.xmarks.com/](https://www.xmarks.com/).  Click "LOG IN" and log in, as-necessary.
     2. Click "MY BOOKMARKS".  This starts their GUI.
     3. Click "Tools -> Export & Restore Old Bookmarks...".  A window displaying a list of revisions appears.
     4. Inside the list of revisions, inspect an element (this gets the page source *after* JavaScript processing has messed with it).
     5. In the source, you should see a table, id `revisions_table`, with child `<tbody>`.  Copy the `<tbody>` outer HTML (i.e., including `<tbody>` itself into a new text file "revs-table.xml").
 
-3. Convert the revisions table into URLs to scrape.
+3. Convert the revisions table into URLs to scrape:
     1. Run "3.-get-urls.py".  This takes "revs-table.xml" and uses it to produce a new file, "revs-urls.txt".
 
-4. Scape all revisions.
+4. Scrape all revisions:
     1. Open "4.-crawler.py".  Set your username and password.
     2. Run "4.-crawler.py".  This takes "revs-urls.txt" and downloads it into "revisions/*.html".
-    3. The scrape sometimes fails (because the server fails).  The result is a 1 KB file saying that something failed.  In these cases, simply delete the failed file(s) and repeat the previous sub-step (already-downloaded files will be skipped).
+    3. The scrape sometimes fails (because the connection or their server fails).  The result seems to be a 1 KB file saying that something failed.  In these cases, simply delete the failed file(s) (if you have a lot of revisions, try sorting by size and deleting the small ones) and repeat the previous sub-step (already-downloaded files will be skipped).
 
-5. Merge revisions:
+5. Merge revisions (if desired):
 
     1. Run "5.-merge.py".  This takes the "revisions/*.html" files and outputs "combined-bookmarks.html", which is suitable to re-upload to XMarks.  Since this can take a while and has the highest probability of failure, it checkpoints every ten merges into "tmp/".
 
@@ -43,6 +43,16 @@ Please read the directions.  As noted, you need to install prerequisites, create
 There may additionally exist minor issues; the code was in some cases edited after initial testing and it's possible I screwed up.  On the whole it should work alright, with perhaps minor changes (which I'd like to hear about).
 
 There may additionally exist major issues.  The code is brittle, and may not work for your particular case.  Or perhaps XMarks will change their website.  If you can't figure something out, contact me, and I'll see if maybe it can be fixed easily.  Python 2 is not supported, although you are welcome to add support for it.
+
+## How Does This Work?
+
+The basic idea is to download all revisions.  The revisions are stored (determined experimentally) at URLs of the form:<br/>
+`https://my.xmarks.com/bookmarks/export_to_html/<rev-num>/xmarks-bookmarks-<rev-year>-<rev-month>-<rev-day>.html`<br/>
+For example, revision 3, taken on 2017-01-25, would be:<br/>
+`https://my.xmarks.com/bookmarks/export_to_html/3/xmarks-bookmarks-2017-01-25.html`<br/>
+You can point your web browser to one of these (valid for your revisions and while logged in, of course), and it should download the revision.  Essentially, the initial steps simply acquire the list of all revisions and download them all automatically.  The scraper itself is well-explained by the source it came from (see credits).
+
+The bookmarks format seems to be [Netscape Bookmark File Format](https://msdn.microsoft.com/en-us/library/aa753582(v=vs.85).aspx): a hideous format based on horrendously broken, nearly unparseable HTML.  I made several efforts to parse it, but eventually deferred to the bookmark-merger script (again, see credits), which I modified and debugged lightly and is redistributed here.
 
 ## Credits
 
